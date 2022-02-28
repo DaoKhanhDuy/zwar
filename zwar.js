@@ -1,6 +1,6 @@
 module.exports.config = {
     name: "zwar",
-    version: "1.0.0",
+    version: "1.0.4",
     credits: "GinzaTech & Michael",
     description: "Tham gia chiến trường zombie trên chính box chat của bạn",
     usages: "zwar [register/shop/upgrade/info/prison/status/sell]",
@@ -19,11 +19,11 @@ module.exports.onLoad = async () => {
     const dirMaterial = __dirname + `/cache/zwar/`;
 
     if (!fs.existsSync(dirMaterial)) fs.mkdirSync(dirMaterial, { recursive: true });
-    if (!fs.existsSync(dirMaterial + "zombie.json")) (await axios({
-            url: "https://raw.githubusercontent.com/GinzaTech/zwar/main/zombie.json",
+    if (!fs.existsSync(dirMaterial + "data.json")) (await axios({
+            url: "https://raw.githubusercontent.com/GinzaTech/zwar/main/data.json",
             method: 'GET',
             responseType: 'stream'
-        })).data.pipe(fs.createWriteStream(dirMaterial + "zombie.json"));
+        })).data.pipe(fs.createWriteStream(dirMaterial + "data.json"));
 
     if (!fs.existsSync(dirMaterial + "gun.json")) (await axios({
             url: "https://raw.githubusercontent.com/GinzaTech/zwar/main/gun.json",
@@ -71,7 +71,7 @@ module.exports.handleReaction = async ({ api, event, handleReaction, Currencies 
 module.exports.handleReply = async function({ api, event, client, handleReply, Currencies }) {
     if (handleReply.author != event.senderID) return;
     const { readFileSync } = require("fs-extra");
-    const emptyItem = {
+    const emptygun = {
         name: "Empty",
         size: 0.0,
         price: 0,
@@ -85,8 +85,8 @@ module.exports.handleReply = async function({ api, event, client, handleReply, C
                 case "1": {
                     var entryList = [],
                         i = 1;
-                    for (const item of datagun.gun) {
-                        entryList.push(`${i}. ${item.name}: ${item.price} Đô [ ❖ ] Độ bền: ${item.duribility}, Thời Gian Chờ : ${item.time} giây`);
+                    for (const gun of datagun.gun) {
+                        entryList.push(`${i}. ${gun.name}: ${gun.price} Đô [ ❖ ] Độ bền: ${gun.duribility}, Thời Gian Chờ : ${gun.time} giây`);
                         i++;
                     }
                     return api.sendMessage(
@@ -109,9 +109,9 @@ module.exports.handleReply = async function({ api, event, client, handleReply, C
                         index = 0,
                         zwar = userData.data.zwar;
 
-                    for (item of zwar.critters) {
-                        moneyAll += item.price;
-                        zwar.critters[index] = emptyItem;
+                    for (gun of zwar.critters) {
+                        moneyAll += gun.price;
+                        zwar.critters[index] = emptygun;
                         index++;
                     }
                     const money = userData["money"] += moneyAll;
@@ -141,18 +141,18 @@ module.exports.handleReply = async function({ api, event, client, handleReply, C
                 var userData = (await Currencies.getData(event.senderID));
                 if (isNaN(event.body)) return api.sendMessage("[Zombie War] Lựa chọn của bạn không phải là một con số!", event.threadID, event.messageID);
                 if (choose > datagun.length || choose < datagun.length) return api.sendMessage("[Zombie War] Lựa chọn của bạn vượt quá danh sách", event.threadID, event.messageID);
-                const itemUserChoose = datagun.gun[choose - 1];
-                if (userData.money < itemUserChoose.price) return api.sendMessage("[Zombie War] Bạn không đủ tiền để có thể súng mới", event.threadID, event.messageID);
-                userData.data.zwar.weapon.name = itemUserChoose.name;
-                userData.data.zwar.weapon.price = itemUserChoose.price;
-                userData.data.zwar.weapon.time = itemUserChoose.time;
+                const gunUserChoose = datagun.gun[choose - 1];
+                if (userData.money < gunUserChoose.price) return api.sendMessage("[Zombie War] Bạn không đủ tiền để có thể súng mới", event.threadID, event.messageID);
+                userData.data.zwar.weapon.name = gunUserChoose.name;
+                userData.data.zwar.weapon.price = gunUserChoose.price;
+                userData.data.zwar.weapon.time = gunUserChoose.time;
                 console.log(userData['data']['zwar']['weapon']);
-                userData.money = userData.money - itemUserChoose.price;
+                userData.money = userData.money - gunUserChoose.price;
                 var data = userData;
                 data.zwar = userData.data.zwar;
                 await Currencies.setData(event.senderID, { money: userData.money, data });
                 console.log((await Currencies.getData(event.senderID)).data.zwar);
-                return api.sendMessage(`[Shop weapon] Bạn đã mua thành công: ${itemUserChoose.name} với giá ${itemUserChoose.price} coins!`, event.threadID, event.messageID);
+                return api.sendMessage(`[Shop weapon] Bạn đã mua thành công: ${gunUserChoose.name} với giá ${gunUserChoose.price} coins!`, event.threadID, event.messageID);
             }
             catch (e) {
                 console.log(e);
@@ -233,7 +233,7 @@ module.exports.getRarityRecursion = (chance, index, number) => {
 
 module.exports.getZombie = (zombieRarity, currentHour, currentMonth) => {
     const { readFileSync } = require ("fs-extra");
-    var dataZombie = require('./cache/zwar/zombie.json');
+    var dataZombie = require('./cache/zwar/data.json');
     var newZombieData = dataZombie.Zombie.filter(Zombie => Zombie.time.includes(currentHour) && Zombie.months.includes(currentMonth) && Zombie.rarity.includes(zombieRarity));
     return newZombieData;
 }
@@ -252,7 +252,7 @@ module.exports.addCritter = (user, critter, api, event) => {
 }
 
 module.exports.run = async function({ api, event, args, client, Currencies, Users }) {
-    const emptyItem = {
+    const emptygun = {
         name: "None",
         price: 0,
         time: 120
@@ -264,7 +264,7 @@ module.exports.run = async function({ api, event, args, client, Currencies, User
                 if (Object.entries(dataUser).length != 0) return api.sendMessage("[Zombie War] Bạn đã từng đăng ký vào chiến trường!", event.threadID, event.messageID);
                 var s = {};
                 s['zwar'] = {};
-                s['zwar'].weapon = emptyItem;
+                s['zwar'].weapon = emptygun;
                 s['zwar'].critters = this.makeEmptyCritterList();
                 var data = (await Currencies.getData(event.senderID));
                 data = s;
@@ -336,7 +336,7 @@ module.exports.run = async function({ api, event, args, client, Currencies, User
                 if (dataUser.weapon.price === 0) return api.sendMessage("[Zombie War] Bạn cần mua súng, hãy sử dụng 'zwar shop' để mua mới!", event.threadID, event.messageID);
                 else if (dates < dataUser.weapon.time) return api.sendMessage("[Zombie War] Bạn đang trong thời gian cooldown, hãy thử lại sau!", event.threadID, event.messageID);
                 else if (dataUser.weapon.duribility < 1) {
-                    dataUser.weapon = emptyItem;
+                    dataUser.weapon = emptygun;
                     return api.sendMessage("[Zombie War] Súng của bạn đã hỏng, sử dụng '/zwar' để mua súng mới!", event.threadID, event.messageID);
                 }
 
