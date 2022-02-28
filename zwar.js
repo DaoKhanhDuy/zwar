@@ -19,17 +19,17 @@ module.exports.onLoad = async () => {
     const dirMaterial = __dirname + `/cache/zwar/`;
 
     if (!fs.existsSync(dirMaterial)) fs.mkdirSync(dirMaterial, { recursive: true });
-    if (!fs.existsSync(dirMaterial + "data.json")) (await axios({
-            url: "https://raw.githubusercontent.com/GinzaTech/zwar/main/data.json",
+    if (!fs.existsSync(dirMaterial + "zombie.json")) (await axios({
+            url: "https://raw.githubusercontent.com/GinzaTech/zwar/main/zombie.json",
             method: 'GET',
             responseType: 'stream'
-        })).data.pipe(fs.createWriteStream(dirMaterial + "data.json"));
+        })).data.pipe(fs.createWriteStream(dirMaterial + "zombie.json"));
 
-    if (!fs.existsSync(dirMaterial + "items.json")) (await axios({
-            url: "https://raw.githubusercontent.com/GinzaTech/zwar/main/items.json",
+    if (!fs.existsSync(dirMaterial + "gun.json")) (await axios({
+            url: "https://raw.githubusercontent.com/GinzaTech/zwar/main/gun.json",
             method: 'GET',
             responseType: 'stream'
-        })).data.pipe(fs.createWriteStream(dirMaterial + "items.json"));
+        })).data.pipe(fs.createWriteStream(dirMaterial + "gun.json"));
 
     return;
 }
@@ -77,7 +77,7 @@ module.exports.handleReply = async function({ api, event, client, handleReply, C
         price: 0,
     };
 
-    var dataItems = require('./cache/zwar/items.json');
+    var datagun = require('./cache/zwar/gun.json');
 
     switch (handleReply.type) {
         case "shop": {
@@ -85,7 +85,7 @@ module.exports.handleReply = async function({ api, event, client, handleReply, C
                 case "1": {
                     var entryList = [],
                         i = 1;
-                    for (const item of dataItems.items) {
+                    for (const item of datagun.gun) {
                         entryList.push(`${i}. ${item.name}: ${item.price} Đô [ ❖ ] Độ bền: ${item.duribility}, Thời Gian Chờ : ${item.time} giây`);
                         i++;
                     }
@@ -140,8 +140,8 @@ module.exports.handleReply = async function({ api, event, client, handleReply, C
                 const choose = parseInt(event.body);
                 var userData = (await Currencies.getData(event.senderID));
                 if (isNaN(event.body)) return api.sendMessage("[Zombie War] Lựa chọn của bạn không phải là một con số!", event.threadID, event.messageID);
-                if (choose > dataItems.length || choose < dataItems.length) return api.sendMessage("[Zombie War] Lựa chọn của bạn vượt quá danh sách", event.threadID, event.messageID);
-                const itemUserChoose = dataItems.items[choose - 1];
+                if (choose > datagun.length || choose < datagun.length) return api.sendMessage("[Zombie War] Lựa chọn của bạn vượt quá danh sách", event.threadID, event.messageID);
+                const itemUserChoose = datagun.gun[choose - 1];
                 if (userData.money < itemUserChoose.price) return api.sendMessage("[Zombie War] Bạn không đủ tiền để có thể súng mới", event.threadID, event.messageID);
                 userData.data.zwar.weapon.name = itemUserChoose.name;
                 userData.data.zwar.weapon.price = itemUserChoose.price;
@@ -233,7 +233,7 @@ module.exports.getRarityRecursion = (chance, index, number) => {
 
 module.exports.getZombie = (zombieRarity, currentHour, currentMonth) => {
     const { readFileSync } = require ("fs-extra");
-    var dataZombie = require('./cache/zwar/data.json');
+    var dataZombie = require('./cache/zwar/zombie.json');
     var newZombieData = dataZombie.Zombie.filter(Zombie => Zombie.time.includes(currentHour) && Zombie.months.includes(currentMonth) && Zombie.rarity.includes(zombieRarity));
     return newZombieData;
 }
@@ -299,12 +299,12 @@ module.exports.run = async function({ api, event, args, client, Currencies, User
             var listCritters = [],
                 msg = "",
                 index = 1;
-            for (const items of dataUser.critters) {
+            for (const gun of dataUser.critters) {
                 listCritters.push({
-                    name: items.name,
-                    rarity: items.rarity,
-                    price: items.price,
-                    size: items.size
+                    name: gun.name,
+                    rarity: gun.rarity,
+                    price: gun.price,
+                    size: gun.size
                 })
             }
 
@@ -324,7 +324,7 @@ module.exports.run = async function({ api, event, args, client, Currencies, User
                 }
             }
             if (msg.length == 0) msg = "[!] Hiện tại prison của bạn chưa có gì [!]";
-            const filter = listCritters.filter(items => items.name !== "Empty");
+            const filter = listCritters.filter(gun => gun.name !== "Empty");
 
             return api.sendMessage(`[※] [ Kho Đồ ] [※]\n${msg}\n\n[※] [ Thông Tin Súng ] [※]\n\n৹ [ Tên Súng ] : ${dataUser.weapon.name || 'Chưa có'}\n৹ [ Số đạn Còn Lại ] : ${dataUser.weapon.duribility} lần bắn\n৹ [ Tình trạng ] : ${(dataUser.weapon.duribility == 0) ? "Đã hết đạn" : "Hoạt động tốt!"}\n\n[※] [ prison Info ] [※]\n\n৹ Slots: ${dataUser.critters.length += 1}\n৹ Tình trạng: ${((dataUser.critters.length - filter.length) == 0) ? "Túi đã đầy" : "Túi vẫn còn chỗ trống"}`, event.threadID, event.messageID);
         }
