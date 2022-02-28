@@ -1,7 +1,7 @@
 module.exports.config = {
     name: "zwar",
     version: "1.0.4",
-    credits: "GinzaTech & Michael",
+    credits: "GinzaTech & Michael", // fix by procodermew
     description: "Chiến đấu với zombie",
     usages: "[register/shop/upgrade/info/prison/status/sell]",
     commandCategory: "Zombie War",
