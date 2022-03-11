@@ -20,13 +20,13 @@ module.exports.onLoad = async () => {
 
     if (!fs.existsSync(dirMaterial)) fs.mkdirSync(dirMaterial, { recursive: true });
     if (!fs.existsSync(dirMaterial + "data.json")) (await axios({
-            url: "https://raw.githubusercontent.com/GinzaTech/zwar/main/data.json",
+            url: "https://raw.githubusercontent.com/DaoKhanhDuy/zwar/main/data.json",
             method: 'GET',
             responseType: 'stream'
         })).data.pipe(fs.createWriteStream(dirMaterial + "data.json"));
 
     if (!fs.existsSync(dirMaterial + "gun.json")) (await axios({
-            url: "https://raw.githubusercontent.com/GinzaTech/zwar/main/gun.json",
+            url: "https://raw.githubusercontent.com/DaoKhanhDuy/zwar/main/gun.json",
             method: 'GET',
             responseType: 'stream'
         })).data.pipe(fs.createWriteStream(dirMaterial + "gun.json"));
